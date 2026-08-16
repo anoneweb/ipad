@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timer Hening Interaktif & Overtime</title>
+    <title>Timer Hening Fleksibel</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -33,12 +33,18 @@
             transition: color 0.3s;
         }
         .overtime {
-            color: #dc3545 !important; /* Warna merah saat waktu kelebihan */
+            color: #dc3545 !important;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         .controls button {
             padding: 10px 20px;
             font-size: 16px;
-            margin: 5px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -46,29 +52,45 @@
         }
         #btn-start { background: #28a745; color: white; }
         #btn-start:hover { background: #218838; }
-        #btn-hold { background: #ffc107; color: black; }
-        #btn-hold:hover { background: #e0a800; }
-        #btn-hold:disabled { background: #e9ecef; color: #6c757d; cursor: not-allowed; }
-        #btn-next { background: #007bff; color: white; display: none; }
+        #btn-start:disabled { background: #6c757d; cursor: not-allowed; }
+        
+        #btn-reset { background: #dc3545; color: white; }
+        #btn-reset:hover { background: #c82333; }
+        
+        #btn-next { background: #007bff; color: white; display: none; width: 100%; }
         #btn-next:hover { background: #0069d9; }
         
-        /* Style Checklist */
         .checklist-container {
-            margin-top: 30px;
+            margin-top: 20px;
             text-align: left;
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
         }
         .checklist-item {
-            padding: 8px 0;
+            padding: 10px 0;
             font-size: 16px;
             border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .checklist-item:last-child { border-bottom: none; }
         .status-active { color: #007bff; font-weight: bold; }
         .status-done { color: #28a745; text-decoration: line-through; }
         .status-waiting { color: #6c757d; }
+
+        #btn-add-phase {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        #btn-add-phase:hover { background: #5a6268; }
 
         /* Pop-up Styles */
         .popup-overlay {
@@ -112,13 +134,14 @@
         
         <div class="controls">
             <button id="btn-start" onclick="startTimer()">Mulai</button>
-            <button id="btn-hold" onclick="toggleHold()" disabled>Hold (Pause)</button>
-            <button id="btn-next" onclick="nextPhase()">Lanjut Hening Berikutnya</button>
+            <button id="btn-reset" onclick="resetTimer()">Reset (Ulang ke Awal)</button>
         </div>
+        <button id="btn-next" onclick="nextPhase()">Lanjut Hening Berikutnya</button>
 
         <div class="checklist-container">
             <h4>Posisi Saat Ini:</h4>
             <div id="checklist-render"></div>
+            <button id="btn-add-phase" onclick="addCustomPhase()" style="display: none;">+ Tambah Hening Ekstra</button>
         </div>
     </div>
 
@@ -133,22 +156,22 @@
 
     <script>
         let currentPhase = 1;
-        let timeRemaining = 60; // Default phase 1
-        let extraSeconds = 0;   // Waktu overtime
-        let isOvertime = false; // Flag overtime
+        let totalPhases = 3; // Default 3 fase, bisa ditambah
+        let timeRemaining = 60; // Hening pertama 60 detik
+        let extraSeconds = 0;
+        let isOvertime = false;
         let timerInterval = null;
-        let isHolding = false;
-        let isPopupMuted = false; // Flag untuk melacak jika user klik "OK"
+        let isPopupMuted = false;
         
         const timeDisplay = document.getElementById('time-display');
         const btnStart = document.getElementById('btn-start');
-        const btnHold = document.getElementById('btn-hold');
         const btnNext = document.getElementById('btn-next');
+        const btnAddPhase = document.getElementById('btn-add-phase');
         const popup = document.getElementById('popup-10s');
         const popupCountdown = document.getElementById('popup-countdown');
         const checklistRender = document.getElementById('checklist-render');
 
-        // Inisialisasi awal
+        // Inisialisasi
         updateDisplay();
         renderChecklist();
 
@@ -159,7 +182,6 @@
                 timeDisplay.innerText = `${m}:${s}`;
                 timeDisplay.classList.remove('overtime');
             } else {
-                // Tampilan saat Overtime (waktu lebih)
                 let m = Math.floor(extraSeconds / 60).toString().padStart(2, '0');
                 let s = (extraSeconds % 60).toString().padStart(2, '0');
                 timeDisplay.innerText = `+${m}:${s}`;
@@ -169,86 +191,102 @@
 
         function startTimer() {
             btnStart.disabled = true;
-            btnNext.style.display = 'none';
+            btnNext.style.display = 'none'; // Sembunyikan jika sebelumnya muncul
             
-            // Aturan hold
-            if (currentPhase > 1) {
-                btnHold.disabled = false;
-            }
-
+            clearInterval(timerInterval); // Cegah double interval
+            
             timerInterval = setInterval(() => {
-                if (!isHolding) {
-                    if (!isOvertime) {
-                        timeRemaining--;
-                        updateDisplay();
+                if (!isOvertime) {
+                    timeRemaining--;
+                    updateDisplay();
 
-                        // Cek 10 detik terakhir
-                        if (timeRemaining <= 10 && timeRemaining > 0) {
-                            if (!isPopupMuted) {
-                                popup.style.display = 'flex';
-                                popupCountdown.innerText = timeRemaining;
-                                speakNumber(timeRemaining); // Suara 10, 9, 8...
-                            }
-                        } 
-                        // Jika waktu tepat habis (0)
-                        else if (timeRemaining === 0) {
-                            isOvertime = true;
-                            btnNext.style.display = 'inline-block'; // Munculkan tombol Lanjut
-                            popup.style.display = 'none'; // Sembunyikan pop up otomatis
-                            
-                            if (!isPopupMuted) {
-                                speakNumber("Waktu habis");
-                            }
-                            
-                            renderChecklist(true); // Tandai ceklist selesai
+                    if (timeRemaining <= 10 && timeRemaining > 0) {
+                        if (!isPopupMuted) {
+                            popup.style.display = 'flex';
+                            popupCountdown.innerText = timeRemaining;
+                            speakNumber(timeRemaining);
                         }
-                    } else {
-                        // Jika masuk masa overtime
-                        extraSeconds++;
-                        updateDisplay();
+                    } 
+                    else if (timeRemaining === 0) {
+                        isOvertime = true;
+                        
+                        // Cek apakah masih ada fase selanjutnya
+                        if (currentPhase < totalPhases) {
+                            btnNext.style.display = 'block'; // Tampilkan tombol untuk lanjut ke fase berikutnya
+                            btnNext.innerText = `Lanjut Hening Ke-${currentPhase + 1}`;
+                        } else {
+                            // Jika berada di fase terakhir, munculkan opsi tambah fase manual
+                            btnAddPhase.style.display = 'block'; 
+                        }
+
+                        popup.style.display = 'none';
+                        if (!isPopupMuted) {
+                            speakNumber("Waktu habis");
+                        }
+                        
+                        renderChecklist(true);
                     }
+                } else {
+                    extraSeconds++;
+                    updateDisplay();
                 }
             }, 1000);
         }
 
-        // Fungsi klik tombol OK pada pop-up
-        function closePopup() {
-            isPopupMuted = true; // Set flag mute agar tidak bunyi lagi di detik berikutnya
-            popup.style.display = 'none'; // Sembunyikan popup
-            window.speechSynthesis.cancel(); // Langsung matikan suara saat itu juga
-        }
-
-        function toggleHold() {
-            isHolding = !isHolding;
-            if (isHolding) {
-                btnHold.innerText = "Lanjutkan (Resume)";
-                btnHold.style.background = "#17a2b8";
-            } else {
-                btnHold.innerText = "Hold (Pause)";
-                btnHold.style.background = "#ffc107";
-            }
-        }
-
-        function nextPhase() {
-            currentPhase++;
-            timeRemaining = 120; // Hening kedua dst 120 detik
+        function resetTimer() {
+            clearInterval(timerInterval);
+            currentPhase = 1;
+            totalPhases = 3; // Reset kembali ke 3 fase default
+            timeRemaining = 60; // Aturan Hening Pertama
             extraSeconds = 0;
             isOvertime = false;
-            isHolding = false;
-            isPopupMuted = false; // Reset mute pop-up untuk sesi berikutnya
+            isPopupMuted = false;
             
-            btnNext.style.display = 'none';
             btnStart.disabled = false;
-            btnHold.innerText = "Hold (Pause)";
-            btnHold.style.background = "#ffc107";
-            btnHold.disabled = true; // Akan diaktifkan lagi ketika klik Mulai
-
+            btnNext.style.display = 'none';
+            btnAddPhase.style.display = 'none';
+            
+            popup.style.display = 'none';
+            window.speechSynthesis.cancel();
+            
             updateDisplay();
             renderChecklist();
         }
 
+        function nextPhase() {
+            clearInterval(timerInterval); // Hentikan overtime sebelumnya
+            
+            currentPhase++;
+            timeRemaining = 120; // Aturan Hening Kedua dst
+            extraSeconds = 0;
+            isOvertime = false;
+            isPopupMuted = false;
+            
+            btnNext.style.display = 'none';
+            btnStart.disabled = false; // Aktifkan tombol mulai untuk diklik pengguna
+            
+            updateDisplay();
+            renderChecklist();
+        }
+
+        function addCustomPhase() {
+            totalPhases++; // Tambah total fase
+            btnAddPhase.style.display = 'none'; // Sembunyikan tombol tambah sementara
+            
+            // Otomatis siapkan tombol Lanjut untuk fase yang baru ditambahkan
+            btnNext.style.display = 'block';
+            btnNext.innerText = `Lanjut Hening Ke-${currentPhase + 1}`;
+            renderChecklist(true); // Gambar ulang list dengan list baru
+        }
+
+        function closePopup() {
+            isPopupMuted = true;
+            popup.style.display = 'none';
+            window.speechSynthesis.cancel();
+        }
+
         function speakNumber(text) {
-            window.speechSynthesis.cancel(); // Stop antrian suara sebelumnya
+            window.speechSynthesis.cancel();
             let msg = new SpeechSynthesisUtterance(text.toString());
             msg.lang = 'id-ID';
             msg.rate = 1.2;
@@ -257,22 +295,22 @@
 
         function renderChecklist(isCurrentFinished = false) {
             checklistRender.innerHTML = '';
-            let maxListToShow = Math.max(3, currentPhase + 1);
 
-            for (let i = 1; i <= maxListToShow; i++) {
+            for (let i = 1; i <= totalPhases; i++) {
                 let div = document.createElement('div');
                 div.className = 'checklist-item';
                 
-                let text = `Hening Ke-${i} (${i === 1 ? '60 Detik, No Hold' : '120 Detik, Bisa Hold'})`;
+                let durasi = i === 1 ? '60 Detik' : '120 Detik';
+                let text = `Hening Ke-${i} (${durasi})`;
 
                 if (i < currentPhase || (i === currentPhase && isCurrentFinished)) {
-                    div.innerHTML = `✅ ${text}`;
+                    div.innerHTML = `<span>✅ ${text}</span>`;
                     div.classList.add('status-done');
                 } else if (i === currentPhase && !isCurrentFinished) {
-                    div.innerHTML = `🔄 <strong>${text}</strong> ⬅️ <em>(Sekarang)</em>`;
+                    div.innerHTML = `<span>🔄 <strong>${text}</strong> ⬅️ <em>(Sekarang)</em></span>`;
                     div.classList.add('status-active');
                 } else {
-                    div.innerHTML = `⏳ ${text}`;
+                    div.innerHTML = `<span>⏳ ${text}</span>`;
                     div.classList.add('status-waiting');
                 }
 
