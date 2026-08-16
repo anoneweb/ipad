@@ -19,40 +19,45 @@
 
         <!-- App Grid -->
         <div class="app-grid">
-            <div class="app" onclick="openApp('Safari')">
-                <div class="icon" style="background: white; font-size: 2rem;">🧭</div>
-                <span>Safari</span>
+            <!-- Hubungkan ke proyek HTML milikmu di parameter kedua -->
+            <div class="app" onclick="openApp('Budget Planner', 'budget.html')">
+                <div class="icon" style="background: #34c759; font-size: 2.5rem;">📊</div>
+                <span>Budget Planner</span>
             </div>
-            <div class="app" onclick="openApp('Notes')">
-                <div class="icon" style="background: #fcf4a3; font-size: 2rem;">📝</div>
-                <span>Notes</span>
+            <div class="app" onclick="openApp('Template Generator', 'generator.html')">
+                <div class="icon" style="background: #007aff; font-size: 2.5rem;">📋</div>
+                <span>Generator</span>
             </div>
-            <div class="app" onclick="openApp('Settings')">
-                <div class="icon" style="background: #8e8e93; font-size: 2rem;">⚙️</div>
+            <div class="app" onclick="openApp('Settings', 'https://example.com')">
+                <div class="icon" style="background: #8e8e93; font-size: 2.5rem;">⚙️</div>
                 <span>Settings</span>
-            </div>
-            <div class="app" onclick="openApp('Files')">
-                <div class="icon" style="background: #007aff; font-size: 2rem;">📁</div>
-                <span>Files</span>
             </div>
         </div>
 
-        <!-- Dock di bagian bawah -->
+        <!-- Dock -->
         <div class="dock-container">
             <div class="dock">
-                <div class="app-dock" onclick="openApp('Messages')">
-                    <div class="icon" style="background: #34c759; font-size: 2.2rem;">💬</div>
+                <div class="app" onclick="openApp('Messages', 'https://example.com')">
+                    <div class="icon" style="background: #34c759; font-size: 2.5rem;">💬</div>
                 </div>
-                <div class="app-dock" onclick="openApp('Mail')">
-                    <div class="icon" style="background: #5ac8fa; font-size: 2.2rem;">✉️</div>
-                </div>
-                <div class="app-dock" onclick="openApp('Music')">
-                    <div class="icon" style="background: #ff2d55; font-size: 2.2rem;">🎵</div>
+                <div class="app" onclick="openApp('Safari', 'https://example.com')">
+                    <div class="icon" style="background: white; font-size: 2.5rem;">🧭</div>
                 </div>
             </div>
+        </div>
+
+        <!-- App Window (Layar saat aplikasi terbuka) -->
+        <div id="app-window" class="app-window hidden">
+            <div class="window-header">
+                <span id="window-title">App Name</span>
+                <!-- Tombol Close layaknya Home Button/Gesture -->
+                <button class="close-btn" onclick="closeApp()">Batal</button>
+            </div>
+            <iframe id="app-frame" src="" frameborder="0"></iframe>
+            <!-- Home Indicator (Garis bawah iPad) -->
+            <div class="home-indicator" onclick="closeApp()"></div>
         </div>
     </div>
     <script src="script.js"></script>
 </body>
 </html>
-
