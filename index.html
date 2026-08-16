@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPadOS Clone</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="ipad-screen">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span class="time" id="clock">00:00</span>
+            <div class="right-icons">
+                <span>📶</span>
+                <span>🔋 100%</span>
+            </div>
+        </div>
+
+        <!-- App Grid -->
+        <div class="app-grid">
+            <div class="app" onclick="openApp('Safari')">
+                <div class="icon" style="background: white; font-size: 2rem;">🧭</div>
+                <span>Safari</span>
+            </div>
+            <div class="app" onclick="openApp('Notes')">
+                <div class="icon" style="background: #fcf4a3; font-size: 2rem;">📝</div>
+                <span>Notes</span>
+            </div>
+            <div class="app" onclick="openApp('Settings')">
+                <div class="icon" style="background: #8e8e93; font-size: 2rem;">⚙️</div>
+                <span>Settings</span>
+            </div>
+            <div class="app" onclick="openApp('Files')">
+                <div class="icon" style="background: #007aff; font-size: 2rem;">📁</div>
+                <span>Files</span>
+            </div>
+        </div>
+
+        <!-- Dock di bagian bawah -->
+        <div class="dock-container">
+            <div class="dock">
+                <div class="app-dock" onclick="openApp('Messages')">
+                    <div class="icon" style="background: #34c759; font-size: 2.2rem;">💬</div>
+                </div>
+                <div class="app-dock" onclick="openApp('Mail')">
+                    <div class="icon" style="background: #5ac8fa; font-size: 2.2rem;">✉️</div>
+                </div>
+                <div class="app-dock" onclick="openApp('Music')">
+                    <div class="icon" style="background: #ff2d55; font-size: 2.2rem;">🎵</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
+
