@@ -3,61 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iPadOS Clone</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Timer Hening Interaktif</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        .timer-display {
+            font-size: 80px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        #btn-start { background: #28a745; color: white; }
+        #btn-start:hover { background: #218838; }
+        #btn-hold { background: #ffc107; color: black; }
+        #btn-hold:hover { background: #e0a800; }
+        #btn-hold:disabled { background: #e9ecef; color: #6c757d; cursor: not-allowed; }
+        #btn-next { background: #007bff; color: white; display: none; }
+        #btn-next:hover { background: #0069d9; }
+        
+        .checklist-container {
+            margin-top: 30px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .checklist-item {
+            padding: 8px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .checklist-item:last-child { border-bottom: none; }
+        .status-active { color: #007bff; font-weight: bold; }
+        .status-done { color: #28a745; text-decoration: line-through; }
+        .status-waiting { color: #6c757d; }
+
+        /* Pop-up Styles */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .popup-box {
+            background: #dc3545;
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease-out forwards;
+        }
+        .popup-box h2 { margin: 0 0 10px 0; font-size: 32px; }
+        .popup-box .countdown { font-size: 60px; font-weight: bold; }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-    <div class="ipad-screen">
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <span class="time" id="clock">00:00</span>
-            <div class="right-icons">
-                <span>📶</span>
-                <span>🔋 100%</span>
-            </div>
+
+    <div class="container">
+        <h2>Timer Sesi Hening</h2>
+        
+        <div class="timer-display" id="time-display">01:00</div>
+        
+        <div class="controls">
+            <button id="btn-start" onclick="startTimer()">Mulai</button>
+            <button id="btn-hold" onclick="toggleHold()" disabled>Hold (Pause)</button>
+            <button id="btn-next" onclick="nextPhase()">Lanjut Hening Berikutnya</button>
         </div>
 
-        <!-- App Grid -->
-        <div class="app-grid">
-            <!-- Hubungkan ke proyek HTML milikmu di parameter kedua -->
-            <div class="app" onclick="openApp('Budget Planner', 'budget.html')">
-                <div class="icon" style="background: #34c759; font-size: 2.5rem;">📊</div>
-                <span>Budget Planner</span>
+        <div class="checklist-container">
+            <h4>Posisi Saat Ini:</h4>
+            <div id="checklist-render">
+                <!-- Checklist akan dibuat secara dinamis oleh JavaScript -->
             </div>
-            <div class="app" onclick="openApp('Template Generator', 'generator.html')">
-                <div class="icon" style="background: #007aff; font-size: 2.5rem;">📋</div>
-                <span>Generator</span>
-            </div>
-            <div class="app" onclick="openApp('Settings', 'https://example.com')">
-                <div class="icon" style="background: #8e8e93; font-size: 2.5rem;">⚙️</div>
-                <span>Settings</span>
-            </div>
-        </div>
-
-        <!-- Dock -->
-        <div class="dock-container">
-            <div class="dock">
-                <div class="app" onclick="openApp('Messages', 'https://example.com')">
-                    <div class="icon" style="background: #34c759; font-size: 2.5rem;">💬</div>
-                </div>
-                <div class="app" onclick="openApp('Safari', 'https://example.com')">
-                    <div class="icon" style="background: white; font-size: 2.5rem;">🧭</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- App Window (Layar saat aplikasi terbuka) -->
-        <div id="app-window" class="app-window hidden">
-            <div class="window-header">
-                <span id="window-title">App Name</span>
-                <!-- Tombol Close layaknya Home Button/Gesture -->
-                <button class="close-btn" onclick="closeApp()">Batal</button>
-            </div>
-            <iframe id="app-frame" src="" frameborder="0"></iframe>
-            <!-- Home Indicator (Garis bawah iPad) -->
-            <div class="home-indicator" onclick="closeApp()"></div>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- Pop up 10 Detik Terakhir -->
+    <div class="popup-overlay" id="popup-10s">
+        <div class="popup-box">
+            <h2>Waktu Hampir Habis!</h2>
+            <div class="countdown" id="popup-countdown">10</div>
+        </div>
+    </div>
+
+    <script>
+        let currentPhase = 1; // 1 = Hening Pertama, 2 = Hening Kedua, dst.
+        let timeRemaining = 60; // Default 60 detik untuk hening pertama
+        let timerInterval = null;
+        let isHolding = false;
+        
+        // Elemen DOM
+        const timeDisplay = document.getElementById('time-display');
+        const btnStart = document.getElementById('btn-start');
+        const btnHold = document.getElementById('btn-hold');
+        const btnNext = document.getElementById('btn-next');
+        const popup = document.getElementById('popup-10s');
+        const popupCountdown = document.getElementById('popup-countdown');
+        const checklistRender = document.getElementById('checklist-render');
+
+        // Inisialisasi awal UI
+        updateDisplay();
+        renderChecklist();
+
+        function updateDisplay() {
+            let m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            let s = (timeRemaining % 60).toString().padStart(2, '0');
+            timeDisplay.innerText = `${m}:${s}`;
+        }
+
+        function startTimer() {
+            btnStart.disabled = true;
+            btnNext.style.display = 'none';
+            
+            // Aturan: Hening pertama tidak boleh hold. Hening kedua dst boleh hold.
+            if (currentPhase > 1) {
+                btnHold.disabled = false;
+            }
+
+            timerInterval = setInterval(() => {
+                if (!isHolding) {
+                    timeRemaining--;
+                    updateDisplay();
+                    checkTenSecondsLimit();
+
+                    if (timeRemaining <= 0) {
+                        finishTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function toggleHold() {
+            isHolding = !isHolding;
+            if (isHolding) {
+                btnHold.innerText = "Lanjutkan (Resume)";
+                btnHold.style.background = "#17a2b8"; // Ubah warna jadi biru saat di hold
+            } else {
+                btnHold.innerText = "Hold (Pause)";
+                btnHold.style.background = "#ffc107"; // Kembali kuning
+            }
+        }
+
+        function checkTenSecondsLimit() {
+            if (timeRemaining <= 10 && timeRemaining > 0) {
+                // Tampilkan Pop-up
+                popup.style.display = 'flex';
+                popupCountdown.innerText = timeRemaining;
+
+                // Suara hitungan mundur menggunakan Text-to-Speech bawaan browser
+                speakNumber(timeRemaining);
+            }
+        }
+
+        function finishTimer() {
+            clearInterval(timerInterval);
+            popup.style.display = 'none'; // Sembunyikan popup
+            speakNumber("Waktu Habis"); // Suara waktu habis
+            
+            btnStart.disabled = false;
+            btnHold.disabled = true;
+            btnNext.style.display = 'inline-block'; // Munculkan tombol lanjut
+            
+            renderChecklist(true); // Tandai selesai
+        }
+
+        function nextPhase() {
+            currentPhase++;
+            timeRemaining = 120; // Aturan 2: Hening kedua dan seterusnya max 120 detik
+            
+            btnNext.style.display = 'none';
+            btnStart.disabled = false;
+            btnHold.innerText = "Hold (Pause)";
+            btnHold.style.background = "#ffc107";
+            isHolding = false;
+
+            updateDisplay();
+            renderChecklist();
+        }
+
+        function speakNumber(number) {
+            // Membatalkan suara sebelumnya agar tidak menumpuk
+            window.speechSynthesis.cancel();
+            
+            let msg = new SpeechSynthesisUtterance(number.toString());
+            msg.lang = 'id-ID'; // Bahasa Indonesia
+            msg.rate = 1.2; // Kecepatan bicara
+            window.speechSynthesis.speak(msg);
+        }
+
+        function renderChecklist(isCurrentFinished = false) {
+            checklistRender.innerHTML = '';
+            
+            // Tampilkan 3 list ke depan agar rapi, atau sesuai currentPhase
+            let maxListToShow = Math.max(3, currentPhase + 1);
+
+            for (let i = 1; i <= maxListToShow; i++) {
+                let div = document.createElement('div');
+                div.className = 'checklist-item';
+                
+                let text = `Hening Ke-${i} (${i === 1 ? '60 Detik, No Hold' : '120 Detik, Bisa Hold'})`;
+
+                if (i < currentPhase || (i === currentPhase && isCurrentFinished)) {
+                    div.innerHTML = `✅ ${text}`;
+                    div.classList.add('status-done');
+                } else if (i === currentPhase && !isCurrentFinished) {
+                    div.innerHTML = `🔄 <strong>${text}</strong> ⬅️ <em>(Sekarang)</em>`;
+                    div.classList.add('status-active');
+                } else {
+                    div.innerHTML = `⏳ ${text}`;
+                    div.classList.add('status-waiting');
+                }
+
+                checklistRender.appendChild(div);
+            }
+        }
+    </script>
 </body>
 </html>
